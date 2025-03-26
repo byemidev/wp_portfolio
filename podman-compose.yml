@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: docker.io/library/mariadb:latest
+    container_name: db
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    restart: always
+
+  wordpress:
+    image: docker.io/library/wordpress:php7.4-fpm-alpine
+    container_name: wordpress
+    volumes:
+      - ./wordpress:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+    depends_on:
+      - db
+    restart: always
+
+  nginx:
+    image: docker.io/library/nginx:${NGINX_VERSION}
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./logs/nginx:/var/log/nginx
+      - ./wordpress:/var/www/html
+    depends_on:
+      - wordpress
+    restart: always
